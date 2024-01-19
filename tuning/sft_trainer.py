@@ -52,7 +52,7 @@ def train(
     print("FOOBAR", logging.get_verbosity())
     print("FOOBAR", logger.level)
     LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
-    logger.basicConfig(level=LOGLEVEL)
+    logger.setLevel(level=LOGLEVEL)
     print("FOOBAR", logging.get_verbosity())
     print("FOOBAR", logger.level)
 
