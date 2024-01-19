@@ -162,8 +162,8 @@ def train(
     trainer.train()
 
 def main(**kwargs):
-    LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
-    logging.basicConfig(level=LOGLEVEL)
+    # LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
+    # logging.basicConfig(level=LOGLEVEL)
 
     parser = transformers.HfArgumentParser(dataclass_types=(configs.ModelArguments, 
                                                             configs.DataArguments,
