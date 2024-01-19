@@ -165,6 +165,8 @@ def main(**kwargs):
     # LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
     # logging.basicConfig(level=LOGLEVEL)
 
+    print(logging.get_verbosity())
+
     parser = transformers.HfArgumentParser(dataclass_types=(configs.ModelArguments, 
                                                             configs.DataArguments,
                                                             configs.TrainingArguments,
