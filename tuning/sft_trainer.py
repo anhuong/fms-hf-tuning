@@ -51,10 +51,14 @@ def train(
     logger = logging.get_logger("sft_trainer")
     print("FOOBAR", logging.get_verbosity())
     print("FOOBAR", logger.level)
-    LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
+    print("FOOBAR", logger.getEffectiveLevel())
+    LOGLEVEL = os.environ.get('TRANSFORMERS_VERBOSITY').upper()
+    if not LOGLEVEL:
+        LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
     logger.setLevel(level=LOGLEVEL)
     print("FOOBAR", logging.get_verbosity())
     print("FOOBAR", logger.level)
+    print("FOOBAR", logger.getEffectiveLevel())
 
     # Validate parameters
     if (not isinstance(train_args.num_train_epochs, float)) or (train_args.num_train_epochs <= 0):
