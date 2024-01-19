@@ -49,6 +49,12 @@ def train(
     run_distributed = int(os.environ.get("WORLD_SIZE", "1")) > 1
 
     logger = logging.get_logger("sft_trainer")
+    print("FOOBAR", logging.get_verbosity())
+    print("FOOBAR", logger.level)
+    LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
+    logger.basicConfig(level=LOGLEVEL)
+    print("FOOBAR", logging.get_verbosity())
+    print("FOOBAR", logger.level)
 
     # Validate parameters
     if (not isinstance(train_args.num_train_epochs, float)) or (train_args.num_train_epochs <= 0):
@@ -162,8 +168,6 @@ def train(
     trainer.train()
 
 def main(**kwargs):
-    # LOGLEVEL = os.environ.get('LOG_LEVEL', 'WARNING').upper()
-    # logging.basicConfig(level=LOGLEVEL)
 
     print(logging.get_verbosity())
 
