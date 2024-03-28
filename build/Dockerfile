@@ -121,11 +121,11 @@ RUN touch /.aim_profile && \
     chmod -R 777 /.cache
 
 # create tuning user and give ownership to dirs
-RUN useradd -u $USER_UID tuning -m -g 0 --system && \
-    chown -R $USER:0 /app /tmp && \
-    chmod -R g+rwX /app /tmp
+# RUN useradd -u $USER_UID tuning -m -g 0 --system && \
+#     chown -R $USER:0 /app /tmp && \
+#     chmod -R g+rwX /app /tmp
 
 WORKDIR /app
-USER ${USER}
+# USER ${USER}
 
 CMD [ "python", "/app/accelerate_launch.py" ]
