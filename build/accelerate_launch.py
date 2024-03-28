@@ -73,10 +73,7 @@ def main():
             else:
                 accelerate_launch_args.append(f"--{key}")
                 # Only need to add key for params that aren't flags ie. --quiet
-                if actions_type_map.get(key) not in [
-                    "_StoreTrueAction",
-                    "_StoreFalseAction",
-                ]:
+                if actions_type_map.get(key) == "_StoreAction":
                     accelerate_launch_args.append(str(val))
 
         if json_configs.get("multi_gpu"):
