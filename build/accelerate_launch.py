@@ -91,10 +91,7 @@ def main():
                 accelerate_launch_args.extend(["--config_file", fsdp_filepath])
 
         elif num_processes == 1:
-            logging.info(
-                "num_processes=1 so setting env var CUDA_VISIBLE_DEVICES=0: %s",
-                fsdp_filepath,
-            )
+            logging.info("num_processes=1 so setting env var CUDA_VISIBLE_DEVICES=0")
             os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     else:
         logging.warning(
