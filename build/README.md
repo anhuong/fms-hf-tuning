@@ -61,7 +61,7 @@ For example, the below config is used for running with two GPUs and FSDP for fin
 }
 ```
 
-The expectation is that `num_processes` is always passed in by the user. When `num_processes` is greater than 1, the [FSDP config](https://github.com/foundation-model-stack/fms-hf-tuning/blob/main/fixtures/accelerate_fsdp_defaults.yaml) is used by default. Any of these values can be overwritten by passing in flags via the JSON config or by passing in your own config file using key `config_file`.
+Users should always set `num_processes` to be explicit about the number of processes to run tuning on. When `num_processes` is greater than 1, the [FSDP config](https://github.com/foundation-model-stack/fms-hf-tuning/blob/main/fixtures/accelerate_fsdp_defaults.yaml) is used by default. Any of these values can be overwritten by passing in flags via `accelerate_launch_args` in the JSON config or by passing in your own config file using key `config_file`.
 
 Note that `num_processes` which is the total number of processes to be launched in parallel, should match the number of GPUs to run on. The number of GPUs used can also be set by setting environment variable `CUDA_VISIBLE_DEVICES`. If ``num_processes=1`, the script will assume single-GPU.
 

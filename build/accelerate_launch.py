@@ -55,7 +55,7 @@ def main():
         json_configs = txt_to_obj(json_env_var)
 
     parser = launch_command_parser()
-    # Map to determine which params are flags ie. don't require a value to be set
+    # Map to determine which flags don't require a value to be set
     actions_type_map = {
         action.dest: type(action).__name__ for action in parser._actions
     }
@@ -79,20 +79,27 @@ def main():
                 if actions_type_map.get(key) == "_StoreAction":
                     accelerate_launch_args.append(str(val))
 
-    if accelerate_config.get("num_processes"):
-        if accelerate_config.get("num_processes") > 1:
-            # Add FSDP config
-            fsdp_filepath = accelerate_config.get("config_file") or os.getenv(
+    num_processes = accelerate_config.get("num_processes")
+    if num_processes:
+        if num_processes > 1 and not accelerate_config.get("config_file"):
+            # Add default FSDP config
+            fsdp_filepath = os.getenv(
                 "FSDP_DEFAULTS_FILE_PATH", "/app/accelerate_fsdp_defaults.yaml"
             )
             if os.path.exists(fsdp_filepath):
                 logging.info("Using accelerate config file: %s", fsdp_filepath)
                 accelerate_launch_args.extend(["--config_file", fsdp_filepath])
 
+        elif num_processes == 1:
+            logging.info(
+                "num_processes=1 so setting env var CUDA_VISIBLE_DEVICES=0: %s",
+                fsdp_filepath,
+            )
+            os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     else:
-        logging.info(
-            "num_processes param was not passed in. So accelerate launch will use \
-                     default num_processes from config file"
+        logging.warning(
+            "num_processes param was not passed in. Value from config file (if available) will \
+                be used or accelerate launch will determine number of processes automatically"
         )
 
     # Add training_script
