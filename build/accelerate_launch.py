@@ -26,7 +26,6 @@ import logging
 
 # Third Party
 from accelerate.commands.launch import launch_command_parser, launch_command
-import torch
 
 
 def txt_to_obj(txt):
@@ -80,26 +79,21 @@ def main():
                 if actions_type_map.get(key) == "_StoreAction":
                     accelerate_launch_args.append(str(val))
 
-    if json_configs.get("multi_gpu"):
-        # Add FSDP config
-        fsdp_filepath = accelerate_config.get("config_file") or os.getenv(
-            "FSDP_DEFAULTS_FILE_PATH", "/app/accelerate_fsdp_defaults.yaml"
-        )
-        if os.path.exists(fsdp_filepath):
-            logging.info("Using accelerate config file: %s", fsdp_filepath)
-            accelerate_launch_args.extend(["--config_file", fsdp_filepath])
+    if accelerate_launch_args.get("num_processes"):
+        if accelerate_launch_args.get("num_processes") > 1:
+            # Add FSDP config
+            fsdp_filepath = accelerate_config.get("config_file") or os.getenv(
+                "FSDP_DEFAULTS_FILE_PATH", "/app/accelerate_fsdp_defaults.yaml"
+            )
+            if os.path.exists(fsdp_filepath):
+                logging.info("Using accelerate config file: %s", fsdp_filepath)
+                accelerate_launch_args.extend(["--config_file", fsdp_filepath])
 
-        if not accelerate_config.get("num_processes"):
-            num_gpus = torch.cuda.device_count()
-            logging.info("Using num_processes: %s for accelerate launch", num_gpus)
-            accelerate_launch_args.extend(["--num_processes", num_gpus])
     else:
         logging.info(
-            "Passing num_processes:1 for accelerate launch. To enable multiple gpus enable \
-            `multi_gpu` flag and specify number of gpus using `num_processes` param, otherwise \
-            torch.cuda.device_count() will be used to deduce the number of processes to use."
+            "num_processes param was not passed in. So accelerate launch will use \
+                     default num_processes from config file"
         )
-        accelerate_launch_args.extend(["--num_processes", 1])
 
     # Add training_script
     accelerate_launch_args.append("/app/launch_training.py")
