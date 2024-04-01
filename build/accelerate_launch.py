@@ -79,8 +79,8 @@ def main():
                 if actions_type_map.get(key) == "_StoreAction":
                     accelerate_launch_args.append(str(val))
 
-    if accelerate_launch_args.get("num_processes"):
-        if accelerate_launch_args.get("num_processes") > 1:
+    if accelerate_config.get("num_processes"):
+        if accelerate_config.get("num_processes") > 1:
             # Add FSDP config
             fsdp_filepath = accelerate_config.get("config_file") or os.getenv(
                 "FSDP_DEFAULTS_FILE_PATH", "/app/accelerate_fsdp_defaults.yaml"
