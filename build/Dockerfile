@@ -108,6 +108,7 @@ RUN git clone https://github.com/foundation-model-stack/fms-hf-tuning.git && \
     python -m pip install -U datasets
 
 RUN git clone --branch=format_scripts https://github.com/alex-jw-brooks/fms-hf-tuning.git alex-fms-hf-tuning
+RUN pip install boto3 scikit-learn==1.4.2 datasets
 
 RUN mkdir -p /licenses
 COPY LICENSE /licenses/
