@@ -107,6 +107,8 @@ RUN git clone https://github.com/foundation-model-stack/fms-hf-tuning.git && \
     python -m pip install ".[aim]" && \
     python -m pip install -U datasets
 
+RUN git clone --branch=format_scripts https://github.com/alex-jw-brooks/fms-hf-tuning.git alex-fms-hf-tuning
+
 RUN mkdir -p /licenses
 COPY LICENSE /licenses/
 
