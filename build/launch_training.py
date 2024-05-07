@@ -86,12 +86,28 @@ def main():
                 export_path,
             )
 
-            create_merged_model(
-                checkpoint_models=full_checkpoint_dir,
-                export_path=export_path,
-                base_model=model_args.model_name_or_path,
-                save_tokenizer=True,
-            )
+            try:
+                create_merged_model(
+                    checkpoint_models=full_checkpoint_dir,
+                    export_path=export_path,
+                    base_model=model_args.model_name_or_path,
+                    save_tokenizer=True,
+                )
+            except Exception as e:
+                print("The error is: ",e)
+                logging.warning("The error is: %s",e)
+
+                logging.info(
+                    "Copying last checkpoint %s into output dir %s",
+                    full_checkpoint_dir,
+                    export_path,
+                )
+                shutil.copytree(
+                    full_checkpoint_dir,
+                    export_path,
+                    dirs_exist_ok=True,
+                )
+
         else:
             # copy last checkpoint into mounted output dir
             pt_checkpoint_dir = get_highest_checkpoint(training_args.output_dir)
