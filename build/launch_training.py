@@ -65,69 +65,69 @@ def main():
     ) = process_launch_training_args(job_config)
 
     original_output_dir = training_args.output_dir
-    with tempfile.TemporaryDirectory() as tempdir:
-        training_args.output_dir = tempdir
-        sft_trainer.train(model_args, data_args, training_args, tune_config)
+    tempdir = "/tmp/anhtest"
+    training_args.output_dir = tempdir
+    sft_trainer.train(model_args, data_args, training_args, tune_config)
 
-        if merge_model:
-            export_path = os.getenv(
-                "LORA_MERGE_MODELS_EXPORT_PATH", original_output_dir
+    if merge_model:
+        export_path = os.getenv(
+            "LORA_MERGE_MODELS_EXPORT_PATH", original_output_dir
+        )
+
+        # get the highest checkpoint dir (last checkpoint)
+        lora_checkpoint_dir = get_highest_checkpoint(training_args.output_dir)
+        full_checkpoint_dir = os.path.join(
+            training_args.output_dir, lora_checkpoint_dir
+        )
+
+        logging.info(
+            "Merging lora tuned checkpoint %s with base model into output path: %s",
+            lora_checkpoint_dir,
+            export_path,
+        )
+
+        try:
+            create_merged_model(
+                checkpoint_models=full_checkpoint_dir,
+                export_path=export_path,
+                base_model=model_args.model_name_or_path,
+                save_tokenizer=True,
             )
+        except Exception as e:
+            print("The error is: ",e)
+            logging.warning("The error is: %s",e)
 
-            # get the highest checkpoint dir (last checkpoint)
-            lora_checkpoint_dir = get_highest_checkpoint(training_args.output_dir)
-            full_checkpoint_dir = os.path.join(
-                training_args.output_dir, lora_checkpoint_dir
-            )
-
-            logging.info(
-                "Merging lora tuned checkpoint %s with base model into output path: %s",
-                lora_checkpoint_dir,
-                export_path,
-            )
-
-            try:
-                create_merged_model(
-                    checkpoint_models=full_checkpoint_dir,
-                    export_path=export_path,
-                    base_model=model_args.model_name_or_path,
-                    save_tokenizer=True,
-                )
-            except Exception as e:
-                print("The error is: ",e)
-                logging.warning("The error is: %s",e)
-
-                logging.info(
-                    "Copying last checkpoint %s into output dir %s",
-                    full_checkpoint_dir,
-                    export_path,
-                )
-                shutil.copytree(
-                    full_checkpoint_dir,
-                    export_path,
-                    dirs_exist_ok=True,
-                )
-
-        else:
-            # copy last checkpoint into mounted output dir
-            pt_checkpoint_dir = get_highest_checkpoint(training_args.output_dir)
             logging.info(
                 "Copying last checkpoint %s into output dir %s",
-                pt_checkpoint_dir,
-                original_output_dir,
+                full_checkpoint_dir,
+                export_path,
             )
             shutil.copytree(
-                os.path.join(training_args.output_dir, pt_checkpoint_dir),
-                original_output_dir,
+                full_checkpoint_dir,
+                export_path,
                 dirs_exist_ok=True,
             )
 
-        # copy over any loss logs
-        train_logs_filepath = os.path.join(
-            training_args.output_dir, sft_trainer.TRAINING_LOGS_FILENAME
+    else:
+        # copy last checkpoint into mounted output dir
+        pt_checkpoint_dir = get_highest_checkpoint(training_args.output_dir)
+        logging.info(
+            "Copying last checkpoint %s into output dir %s",
+            pt_checkpoint_dir,
+            original_output_dir,
         )
-        if os.path.exists(train_logs_filepath):
-            shutil.copy(train_logs_filepath, original_output_dir)
+        shutil.copytree(
+            os.path.join(training_args.output_dir, pt_checkpoint_dir),
+            original_output_dir,
+            dirs_exist_ok=True,
+        )
+
+    # copy over any loss logs
+    train_logs_filepath = os.path.join(
+        training_args.output_dir, sft_trainer.TRAINING_LOGS_FILENAME
+    )
+    if os.path.exists(train_logs_filepath):
+        shutil.copy(train_logs_filepath, original_output_dir)
 
 
 if __name__ == "__main__":
