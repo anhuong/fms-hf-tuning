@@ -131,6 +131,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     # Cleanup the bdist whl file
     rm $(head bdist_name) /tmp/bdist_name
 
+RUN pip install git+https://github.com/huggingface/peft
+
 RUN mkdir -p /licenses
 COPY LICENSE /licenses/
 
