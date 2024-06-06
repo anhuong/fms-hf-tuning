@@ -29,7 +29,7 @@ from transformers import (
     TrainerCallback,
 )
 from transformers.utils import logging
-from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+from trl import DataCollatorForCompletionOnlyLM, SFTTrainer, SFTConfig
 import datasets
 import fire
 import transformers
@@ -282,16 +282,19 @@ def train(
             "Validation dataset length is %s", len(formatted_validation_dataset)
         )
 
+    # args = SFTConfig(**train_args.to_dict())
+    sft_config = SFTConfig(
+        dataset_text_field=data_args.dataset_text_field,
+        packing=packing,
+        max_seq_length=max_seq_length,
+    )
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         train_dataset=formatted_train_dataset,
         eval_dataset=formatted_validation_dataset,
-        packing=packing,
         data_collator=data_collator,
-        dataset_text_field=data_args.dataset_text_field,
-        args=train_args,
-        max_seq_length=max_seq_length,
+        args=sft_config,
         callbacks=trainer_callbacks,
         peft_config=peft_config,
     )
