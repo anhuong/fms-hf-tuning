@@ -46,7 +46,7 @@ RUN useradd -u $USER_UID ${USER} -m -g 0 --system && \
 FROM base as release-base
 
 # Removes the python3.9 code to eliminate possible CVEs.  Also removes dnf
-RUN rpm -e $(dnf repoquery python3-* -q --installed) python3 crypto-policies-scripts
+# RUN rpm -e $(dnf repoquery python3-* -q --installed) python3 crypto-policies-scripts
 
 ## CUDA Base ###################################################################
 FROM base as cuda-base
