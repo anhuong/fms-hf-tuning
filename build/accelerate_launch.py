@@ -18,6 +18,7 @@ for the encoded config string to parse.
 """
 
 # Standard
+import copy
 import os
 import logging
 import subprocess
@@ -28,7 +29,7 @@ import shutil
 from pathlib import Path
 
 # Third Party
-from accelerate.commands.launch import launch_command
+from accelerate.commands.launch import launch_command, _validate_launch_command, prepare_multi_gpu_env
 
 # Local
 from build.utils import (
@@ -69,6 +70,11 @@ def main():
 
         args = process_accelerate_launch_args(job_config)
         logging.debug("accelerate launch parsed args: %s", args)
+        new_args = copy.deepcopy(args)
+        validated_args, defaults, mp_from_config_flag = _validate_launch_command(new_args)
+        prep = prepare_multi_gpu_env(validated_args)
+        logging.debug("accelerate launch validated args: %s", validated_args)
+        logging.debug("accelerate launch prepped multi_gpu args: %s", prep)
     except FileNotFoundError as e:
         logging.error(traceback.format_exc())
         write_termination_log("Unable to load file: {}".format(e))
