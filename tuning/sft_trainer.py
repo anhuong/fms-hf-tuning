@@ -19,6 +19,8 @@ import json
 import sys
 import time
 import traceback
+import socket
+import os
 
 # Third Party
 from huggingface_hub.utils._validators import HFValidationError
@@ -120,6 +122,18 @@ def train(
         train_args.gradient_accumulation_steps <= 0
     ):
         raise ValueError("gradient_accumulation_steps has to be an integer >= 1")
+    
+    # set log_dir to output_dir if not provided
+    # NOTE: overwrites the default set by transformers.TrainingArguments
+    # https://github.com/huggingface/transformers/blob/v4.40.2/src/transformers/training_args.py#L304-L306
+    print(train_args.logging_dir)
+    print(socket.gethostname())
+    if "/runs/" in train_args.logging_dir and socket.gethostname() in train_args.logging_dir:
+        train_args.logging_dir = train_args.output_dir
+        if not os.path.exists(train_args.logging_dir):
+            os.makedirs(train_args.logging_dir)
+
+    print(train_args.logging_dir)
 
     task_type = "CAUSAL_LM"
     additional_metrics = {}
@@ -459,6 +473,18 @@ def parse_arguments(parser, json_config=None):
     else:
         tune_config = None
 
+    # # set log_dir to output_dir if not provided
+    # # NOTE: overwrites the default set by transformers.TrainingArguments
+    # # https://github.com/huggingface/transformers/blob/v4.40.2/src/transformers/training_args.py#L304-L306
+    # print(training_args.logging_dir)
+    # print(socket.gethostname())
+    # if "/runs/" in training_args.logging_dir and socket.gethostname() in training_args.logging_dir:
+    #     training_args.logging_dir = training_args.output_dir
+    #     if not os.path.exists(training_args.logging_dir):
+    #         os.makedirs(training_args.logging_dir)
+
+    # print(training_args.logging_dir)
+
     return (
         model_args,
         data_args,
@@ -493,7 +519,7 @@ def main(**kwargs):  # pylint: disable=unused-argument
             fusedops_kernels_config,
             exp_metadata,
         ) = parse_arguments(parser, job_config)
-        logger.debug(
+        print(
             "Input args parsed: \
             model_args %s, data_args %s, training_args %s, trainer_controller_args %s, \
             tune_config %s, file_logger_config, %s aim_config %s, \

@@ -60,6 +60,7 @@ def _setup_data() -> InputData:
     return InputData(
         args=config.TrainingArguments(
             output_dir="",
+            logging_dir="",
             logging_strategy=IntervalStrategy.STEPS,
             logging_steps=1,
         ),

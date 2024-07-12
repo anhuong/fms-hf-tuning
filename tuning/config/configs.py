@@ -114,6 +114,16 @@ class TrainingArguments(transformers.TrainingArguments):
             'steps' (logging is done every `logging_steps`)"
         },
     )
+    # Note that this is reusing the flag from transformers for tensorboard metrics
+    # https://github.com/huggingface/transformers/blob/v4.40.2/src/transformers/training_args.py#L304-L306
+    logging_dir: str = field(
+        default=None,
+        metadata={
+            "help": "Directory for training logs and metrics. \
+            Note that this flag is different than logging_dir which is \
+            for Tensorboard metrics."
+        },
+    )
     trackers: Optional[List[str.lower]] = field(
         default_factory=lambda: ["file_logger"],
         metadata={

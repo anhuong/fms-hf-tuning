@@ -43,7 +43,9 @@ class FileLoggingCallback(TrainerCallback):
         if not state.is_world_process_zero:
             return
 
-        log_file_path = os.path.join(args.output_dir, self.training_logs_filename)
+        # note to self: this args is specficially the transformers TrainingArguments, because trying
+        # to use args.log_dir fails with `AttributeError: 'SFTConfig' object has no attribute 'log_dir'`
+        log_file_path = os.path.join(args.logging_dir, self.training_logs_filename)
         if logs is not None and "loss" in logs and "epoch" in logs:
             self._track_loss("loss", "training_loss", log_file_path, logs, state)
         elif logs is not None and "eval_loss" in logs and "epoch" in logs:

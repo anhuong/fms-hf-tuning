@@ -40,6 +40,7 @@ from tests.data import (
 # Local
 from tuning import sft_trainer
 from tuning.config import configs, peft_config
+from tuning.config.tracker_configs import FileLoggingTrackerConfig
 
 MODEL_NAME = "Maykeye/TinyLLama-v0"
 MODEL_ARGS = configs.ModelArguments(
@@ -299,17 +300,21 @@ def test_run_causallm_pt_invalid_train_params(param_name, param_val, exc_msg):
             sft_trainer.train(MODEL_ARGS, DATA_ARGS, invalid_params, PEFT_PT_ARGS)
 
 
-def test_run_causallm_pt_with_validation():
-    """Check if we can bootstrap and peft tune causallm models with validation dataset"""
+def test_run_causallm_pt_with_validation_and_log_dir():
+    """Check if we can bootstrap and peft tune causallm models with validation dataset
+    and output to designated log_dir."""
     with tempfile.TemporaryDirectory() as tempdir:
         train_args = copy.deepcopy(TRAIN_ARGS)
         train_args.output_dir = tempdir
         train_args.evaluation_strategy = "epoch"
+        log_dir = os.path.join(tempdir, "logs")
+        train_args.logging_dir = log_dir
         data_args = copy.deepcopy(DATA_ARGS)
         data_args.validation_data_path = TWITTER_COMPLAINTS_DATA
 
         sft_trainer.train(MODEL_ARGS, data_args, train_args, PEFT_PT_ARGS)
         _validate_training(tempdir, check_eval=True)
+        assert os.path.isdir(log_dir)
 
 
 def test_run_causallm_pt_with_validation_data_formatting():
@@ -379,6 +384,28 @@ def test_run_causallm_lora_and_inference(request, target_modules, expected):
         assert len(output_inference) > 0
         assert "Simply put, the theory of relativity states that" in output_inference
 
+@pytest.mark.parametrize(
+    "target_modules,expected",
+    target_modules_val_map,
+    ids=["default", "custom_target_modules", "all_linear_target_modules"],
+)
+def test_run_causallm_lora_and_log_dir(request, target_modules, expected):
+    """Check if we can bootstrap and lora tune causallm models"""
+    with tempfile.TemporaryDirectory() as tempdir:
+        train_args = copy.deepcopy(TRAIN_ARGS)
+        train_args.output_dir = tempdir
+        log_dir = os.path.join(tempdir, "logs")
+        train_args.logging_dir = log_dir
+        base_lora_args = copy.deepcopy(PEFT_LORA_ARGS)
+        if "default" not in request._pyfuncitem.callspec.id:
+            base_lora_args.target_modules = target_modules
+
+        sft_trainer.train(MODEL_ARGS, DATA_ARGS, train_args, base_lora_args)
+
+        _validate_training(tempdir)
+        # validate that logs created in log_dir
+        assert os.path.exist(log_dir)
+
 
 ############################# Finetuning Tests #############################
 
@@ -409,7 +436,9 @@ def test_run_causallm_ft_and_inference():
 ############################# Helper functions #############################
 def _validate_training(tempdir, check_eval=False):
     assert any(x.startswith("checkpoint-") for x in os.listdir(tempdir))
-    train_logs_file_path = "{}/training_logs.jsonl".format(tempdir)
+    train_logs_file_path = os.path.join(
+        tempdir, FileLoggingTrackerConfig.training_logs_filename
+    )
     train_log_contents = ""
     with open(train_logs_file_path, encoding="utf-8") as f:
         train_log_contents = f.read()

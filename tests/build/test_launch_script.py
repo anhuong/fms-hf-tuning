@@ -31,6 +31,7 @@ from tuning.utils.error_logging import (
     USER_ERROR_EXIT_CODE,
     INTERNAL_ERROR_EXIT_CODE,
 )
+from tuning.config.tracker_configs import FileLoggingTrackerConfig
 
 SCRIPT = "tuning/sft_trainer.py"
 MODEL_NAME = "Maykeye/TinyLLama-v0"
@@ -135,6 +136,41 @@ def test_successful_lora():
         assert os.path.exists(os.path.join(tempdir, ".complete")) is True
         assert os.path.exists(tempdir + "/adapter_model.safetensors") is True
         assert os.path.exists(tempdir + "/adapter_config.json") is True
+
+
+def test_successful_validation_and_logs():
+    """Check if we can run LoRA with validation dataset and output logs
+    to output dir while tuning."""
+    with tempfile.TemporaryDirectory() as tempdir:
+        setup_env(tempdir)
+        validation_args = {
+            "validation_data_path": TWITTER_COMPLAINTS_DATA,
+            "evaluation_strategy": "epoch",
+        }
+        TRAIN_KWARGS = {
+            **BASE_LORA_KWARGS,
+            **validation_args,
+            **{"output_dir": tempdir},
+        }
+        serialized_args = serialize_args(TRAIN_KWARGS)
+        os.environ["SFT_TRAINER_CONFIG_JSON_ENV_VAR"] = serialized_args
+
+        assert main() == 0
+        # check termination log and .complete files
+        assert os.path.exists(tempdir + "/termination-log") is False
+        assert os.path.exists(os.path.join(tempdir, ".complete")) is True
+        assert os.path.exists(tempdir + "/adapter_model.safetensors") is True
+        assert os.path.exists(tempdir + "/adapter_config.json") is True
+
+        train_logs_file_path = os.path.join(
+            tempdir, FileLoggingTrackerConfig.training_logs_filename
+        )
+        assert os.path.exists(train_logs_file_path) is True
+        train_log_contents = ""
+        with open(train_logs_file_path, encoding="utf-8") as f:
+            train_log_contents = f.read()
+        assert "training_loss" in train_log_contents
+        assert "validation_loss" in train_log_contents
 
 
 def test_bad_script_path():
