@@ -16,7 +16,7 @@
 
 ## Summary and Objective
 
-There is a need for the continuous streaming to the log file to be accessible during tuning in order to display the information in a graph. Currently, although loss is continuously streamed to the ttraining_logs.jsonl`, this file is not accessible in the given `output_dir` specified by the user until tuning is complete.
+There is a need for the continuous streaming to the log file to be accessible during tuning in order to display the information in a graph. Currently, although loss is continuously streamed to the `training_logs.jsonl`, this file is not accessible in the given `output_dir` specified by the user until tuning is complete.
 
 
 ### Motivation
@@ -49,7 +49,7 @@ To overcome this and set `logging_dir` to the `output_dir` by default, we can ch
 if "/runs/" in logging_dir:
    logging_dir = output_dir
 ```
-so that logging_dir is not set by default to the output_dir.
+so that logging_dir is set by default to the `output_dir` instead.
 
 ### Alternatives Considered
 
@@ -57,11 +57,12 @@ so that logging_dir is not set by default to the output_dir.
 
 ## Consequences
 
-- Replaces logging_dir default utiltiy from within `transformers.TrainingArguments`
+- Replaces logging_dir default utility from within `transformers.TrainingArguments`
 - If tensorboard is installed, will write tensorboard metrics out to `output_dir`
+- Also note that in order for the unit tests to pass, the overwriting of `logging_dir` has to occur in `sft_trainer.train()` since the unit tests call this method directly. By having it in this method, this ensure the flag is properly overwritten and not only when used in the image or with `accelerate_launch.py`.
 
 
 ## Detailed Design
 
-This section is optional. Elaborate on details if they’re important to understanding the design, but would make it hard to read the proposal section above.
+See proposed changed from [commmit](https://github.com/foundation-model-stack/fms-hf-tuning/compare/main...anhuong:fms-hf-tuning:logdir?expand=1#diff-7d8f6f8626340337d03a2f04fec2840d2ede32b0c7af2640eed9759af45bb3cf).
 
