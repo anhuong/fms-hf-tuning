@@ -135,7 +135,7 @@ RUN --mount=type=cache,target=/home/${USER}/.cache/pip,uid=${USER_UID} \
     rm $(head bdist_name) /tmp/bdist_name
 
 ## Final image ################################################
-FROM release-base as release
+FROM quay.io/modh/fms-hf-tuning:release-014bbf70f020a5ac5e40bfe5fb0285a5d7676a42 as release
 ARG USER
 ARG PYTHON_VERSION
 
@@ -163,6 +163,7 @@ RUN touch /.aim_profile && \
 WORKDIR /app
 USER ${USER}
 COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
+COPY --from=base /usr/bin /tmp/usr/bin
 ENV PYTHONPATH="/home/${USER}/.local/lib/python${PYTHON_VERSION}/site-packages"
 
 CMD [ "python", "/app/accelerate_launch.py" ]
