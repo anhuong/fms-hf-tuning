@@ -103,6 +103,8 @@ RUN dnf config-manager \
 
 ENV LIBRARY_PATH="$CUDA_HOME/lib64/stubs"
 
+## Python installations ############################################################
+
 FROM cuda-devel AS python-installations
 
 ARG WHEEL_VERSION
@@ -110,6 +112,12 @@ ARG USER
 ARG USER_UID
 ARG ENABLE_FMS_ACCELERATION
 ARG ENABLE_AIM
+
+RUN echo $CUDA_HOME
+RUN ls $CUDA_HOME || echo "failed"
+RUN ls /usr/local/nvidia/lib
+RUN ls /usr/local/cuda/lib64
+RUN dnf install -y libcudnn9 libcudnn9-dev
 
 RUN dnf install -y git && \
     # perl-Net-SSLeay.x86_64 and server_key.pem are installed with git as dependencies
