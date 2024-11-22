@@ -59,6 +59,14 @@ class FastKernelsConfig(List):
     # fast RoPE embedding triton kernels
     fast_rope_embeddings: bool = False
 
+    # fused linear cross entropy loss
+    fused_linear_loss: False
+
+    def __post_init__(self):
+
+        if self.fast_loss and self.fused_linear_loss:
+            raise ValueError("fast_loss and fused_linear_loss cannot both be enabled, select one.")
+
 
 @dataclass
 class FusedOpsAndKernelsConfig:
