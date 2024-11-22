@@ -157,7 +157,7 @@ RUN python -m pip uninstall wheel build -y && \
     rm $(head bdist_name) /tmp/bdist_name
 
 ## Final image ################################################
-FROM release-base AS release
+FROM python-installations AS release
 ARG USER
 ARG PYTHON_VERSION
 ARG ENABLE_AIM
@@ -193,7 +193,7 @@ ENV SET_NUM_PROCESSES_TO_NUM_GPUS="True"
 
 WORKDIR /app
 USER ${USER}
-COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
+#COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
 ENV PYTHONPATH="/home/${USER}/.local/lib/python${PYTHON_VERSION}/site-packages"
 
 CMD [ "python", "/app/accelerate_launch.py" ]
