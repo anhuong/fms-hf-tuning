@@ -122,10 +122,13 @@ RUN cat /usr/lib/cuda/version.txt || echo "failed"
 RUN cat /proc/driver/nvidia/version || echo "failed"
 RUN nvidia-smi || echo "failed"
 RUN ls /usr/local/lib/python${PYTHON_VERSION}/site-packages/nvidia/cudnn/lib || echo "failed"
+RUN ls /usr/local/lib/python3.11/site-packages/nvidia || echo "failed"
 RUN dnf list installed | grep cuda
-RUN dnf install -y libcudnn9 || echo "failed"
+RUN dnf install -y libcudnn9-cuda-12 || echo "failed"
 RUN dnf install -y nvidia-cudnn || echo "failed"
 RUN dnf install -y cudnn9-cuda-12 || echo "failed"
+RUN dnf list installed | grep cuda
+RUN ls /usr/local/cuda/lib64 || echo "failed"
 
 RUN dnf install -y git && \
     # perl-Net-SSLeay.x86_64 and server_key.pem are installed with git as dependencies
