@@ -162,38 +162,38 @@ ARG USER
 ARG PYTHON_VERSION
 ARG ENABLE_AIM
 
-RUN mkdir -p /licenses
-COPY LICENSE /licenses/
+# RUN mkdir -p /licenses
+# COPY LICENSE /licenses/
 
-RUN mkdir /app && \
-    chown -R $USER:0 /app /tmp && \
-    chmod -R g+rwX /app /tmp
+# RUN mkdir /app && \
+#     chown -R $USER:0 /app /tmp && \
+#     chmod -R g+rwX /app /tmp
 
-# Set Triton environment variables for qLoRA
-ENV TRITON_HOME="/tmp/triton_home"
-ENV TRITON_DUMP_DIR="/tmp/triton_dump_dir"
-ENV TRITON_CACHE_DIR="/tmp/triton_cache_dir"
-ENV TRITON_OVERRIDE_DIR="/tmp/triton_override_dir"
+# # Set Triton environment variables for qLoRA
+# ENV TRITON_HOME="/tmp/triton_home"
+# ENV TRITON_DUMP_DIR="/tmp/triton_dump_dir"
+# ENV TRITON_CACHE_DIR="/tmp/triton_cache_dir"
+# ENV TRITON_OVERRIDE_DIR="/tmp/triton_override_dir"
 
-# Need a better way to address these hacks
-RUN if [[ "${ENABLE_AIM}" == "true" ]] ; then \
-        touch /.aim_profile && \
-        chmod -R 777 /.aim_profile; \
-    fi
-RUN mkdir /.cache && \
-    chmod -R 777 /.cache
+# # Need a better way to address these hacks
+# RUN if [[ "${ENABLE_AIM}" == "true" ]] ; then \
+#         touch /.aim_profile && \
+#         chmod -R 777 /.aim_profile; \
+#     fi
+# RUN mkdir /.cache && \
+#     chmod -R 777 /.cache
 
-# Copy scripts and default configs
-COPY build/accelerate_launch.py fixtures/accelerate_fsdp_defaults.yaml /app/
-COPY build/utils.py /app/build/
-RUN chmod +x /app/accelerate_launch.py
+# # Copy scripts and default configs
+# COPY build/accelerate_launch.py fixtures/accelerate_fsdp_defaults.yaml /app/
+# COPY build/utils.py /app/build/
+# RUN chmod +x /app/accelerate_launch.py
 
-ENV FSDP_DEFAULTS_FILE_PATH="/app/accelerate_fsdp_defaults.yaml"
-ENV SET_NUM_PROCESSES_TO_NUM_GPUS="True"
+# ENV FSDP_DEFAULTS_FILE_PATH="/app/accelerate_fsdp_defaults.yaml"
+# ENV SET_NUM_PROCESSES_TO_NUM_GPUS="True"
 
-WORKDIR /app
-USER ${USER}
-#COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
-ENV PYTHONPATH="/home/${USER}/.local/lib/python${PYTHON_VERSION}/site-packages"
+# WORKDIR /app
+# USER ${USER}
+# #COPY --from=python-installations /home/${USER}/.local /home/${USER}/.local
+# ENV PYTHONPATH="/home/${USER}/.local/lib/python${PYTHON_VERSION}/site-packages"
 
-CMD [ "python", "/app/accelerate_launch.py" ]
+# CMD [ "python", "/app/accelerate_launch.py" ]
