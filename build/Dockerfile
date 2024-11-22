@@ -113,10 +113,13 @@ ARG USER_UID
 ARG ENABLE_FMS_ACCELERATION
 ARG ENABLE_AIM
 
-RUN echo $CUDA_HOME
 RUN ls $CUDA_HOME || echo "failed"
-RUN ls /usr/local/nvidia/lib
-RUN ls /usr/local/cuda/lib64
+RUN ls /usr/local/nvidia || echo "failed"
+RUN ls /usr/local/cuda/lib64 || echo "failed"
+RUN ls /usr/local/cuda/bin || echo "failed"
+RUN /usr/local/cuda/bin/nvcc --version || echo "failed"
+RUN cat /usr/lib/cuda/version.txt || echo "failed"
+RUN nvidia-smi
 RUN dnf install -y libcudnn9 libcudnn9-dev
 
 RUN dnf install -y git && \
