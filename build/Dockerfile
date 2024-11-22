@@ -119,7 +119,8 @@ RUN ls /usr/local/cuda/lib64 || echo "failed"
 RUN ls /usr/local/cuda/bin || echo "failed"
 RUN /usr/local/cuda/bin/nvcc --version || echo "failed"
 RUN cat /usr/lib/cuda/version.txt || echo "failed"
-RUN nvidia-smi
+RUN cat /proc/driver/nvidia/version || echo "failed"
+RUN nvidia-smi || echo "failed"
 RUN dnf install -y libcudnn9 libcudnn9-dev
 
 RUN dnf install -y git && \
