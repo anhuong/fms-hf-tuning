@@ -22,7 +22,7 @@ import re
 # Third Party
 from jinja2 import StrictUndefined, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment, SecurityError
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, LlavaProcessor
 
 # Local
 from tuning.utils.config_utils import process_jinja_placeholders
@@ -257,6 +257,39 @@ def apply_tokenizer_chat_template(
     }
 
 
+def apply_processor_multimodal_data(
+    element: Dict[str, str],
+    tokenizer: AutoTokenizer,
+    **kwargs,
+):
+    """Function (data handler) to apply processor to multimodal dataset elements.
+       Expects to be run as a HF Map API function.
+    Args:
+        element: the HF Dataset element.
+        tokenizer: Tokenizer to be used.
+    Returns:
+        Formatted HF Dataset element by formatting dataset with processor
+    """
+
+    # ToDo: FOR NOW APPLY CHAT TEMPLATE FOR TESTING PURPOSE WHICH COULD BE SEPERATED USING DIFFERENT HANDLER
+    processor = kwargs.get("processor", {})
+    processor_kwargs = kwargs.get("processor_kwargs", {})
+    fields_name = kwargs.get("fields_name", {})
+
+    text = processor.apply_chat_template(
+        element[fields_name.text_field_name], tokenize=False
+    )
+
+    image = element[fields_name.image_field_name]
+    if isinstance(processor, LlavaProcessor):
+        image = image[0]
+
+    element = processor(text=text, images=image, **processor_kwargs)
+
+    # Single element is of type <class 'transformers.feature_extraction_utils.BatchFeature'> which can be used as dict
+    return element
+
+
 def duplicate_columns(
     element: Dict[str, str],
     old_column: str,
@@ -297,5 +330,6 @@ AVAILABLE_DATA_HANDLERS = {
     "apply_custom_data_formatting_template": apply_custom_data_formatting_template,
     "apply_custom_jinja_template": apply_custom_jinja_template,
     "apply_tokenizer_chat_template": apply_tokenizer_chat_template,
+    "apply_processor_multimodal_data": apply_processor_multimodal_data,
     "duplicate_columns": duplicate_columns,
 }
