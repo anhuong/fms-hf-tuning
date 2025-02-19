@@ -205,7 +205,14 @@ def _get_vision_dataset_handlers(data_args, processor):
         "image_field_name": data_args.image_field_name,
     }
     fn_kwargs["processor_kwargs"] = processor_kwargs
-    kwargs = {"fn_kwargs": fn_kwargs, "batched": False, "remove_columns": None}
+    # Num_proc is None to avoid using multicpu processing;
+    # batched is True to use batch processing and have correct numbers of padding tokens;
+    kwargs = {
+        "fn_kwargs": fn_kwargs,
+        "batched": True,
+        "remove_columns": [data_args.text_field_name, data_args.image_field_name],
+        "num_proc": None,
+    }
 
     handlers = [
         # DataHandlerConfig("apply_tokenizer_chat_template", arguments=kwargs),

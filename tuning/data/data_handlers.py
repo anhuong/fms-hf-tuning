@@ -277,10 +277,10 @@ def apply_processor_multimodal_data(
     fields_name = kwargs.get("fields_name", {})
 
     text = processor.apply_chat_template(
-        element[fields_name.text_field_name], tokenize=False
+        element[fields_name["text_field_name"]], tokenize=False
     )
 
-    image = element[fields_name.image_field_name]
+    image = element[fields_name["image_field_name"]]
     if isinstance(processor, LlavaProcessor):
         image = image[0]
 
