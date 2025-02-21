@@ -16,12 +16,14 @@ from typing import Callable, Optional
 import logging
 
 # Third Party
-from transformers import AutoTokenizer, DataCollatorForSeq2Seq
+from transformers import AutoTokenizer, DataCollatorForSeq2Seq, LlavaProcessor
 from trl import DataCollatorForCompletionOnlyLM
 
 # Local
 from tuning.config import configs
 from tuning.utils.collators import VisionDataCollator
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +120,48 @@ def get_data_collator(
         raise ValueError(
             "Could not pick a data collator. Please refer to supported data formats"
         )
+
+class VisionDataCollator:
+    def __init__(self, processor, text_field_name, image_field_name):
+        self.processor = processor
+        self.text_field_name = text_field_name
+        self.image_field_name = image_field_name
+
+    def __call__(self, examples):
+        """
+        Processes both the text and images by applying the chat template
+        and tokenizing the data.
+        This collator takes a list of examples as input and
+        returns a batch of processed data
+        """
+        # Get the texts and images, and apply the chat template
+        texts = [
+            self.processor.apply_chat_template(
+                example[self.text_field_name], tokenize=False
+            )
+            for example in examples
+        ]
+        images = [example[self.image_field_name] for example in examples]
+
+        # LLava1.5 does not support multiple images
+        if isinstance(self.processor, LlavaProcessor):
+            images = [image[0] for image in images]
+
+        # Tokenize the texts and process the images
+        batch = self.processor(
+            text=texts, images=images, return_tensors="pt", padding=True
+        )
+
+        # The labels are the input_ids, and we mask the padding tokens in the loss computation
+        # TOOD: should we be ensuring EOS tokens is set?
+        labels = batch["input_ids"].clone()
+        if self.processor.tokenizer.pad_token_id is not None:
+            labels[labels == self.processor.tokenizer.pad_token_id] = -100
+        # Ignore the image token index in the loss computation (model specific)
+        image_token_id = self.processor.tokenizer.convert_tokens_to_ids(
+            self.processor.image_token
+        )
+        labels[labels == image_token_id] = -100
+        batch["labels"] = labels
+
+        return batch
