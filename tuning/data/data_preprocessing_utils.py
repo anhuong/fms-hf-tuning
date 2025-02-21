@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Standard
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 import logging
 
 # Third Party
-from transformers import AutoTokenizer, DataCollatorForSeq2Seq, LlavaProcessor
+from transformers import AutoTokenizer, DataCollatorForSeq2Seq, LlavaProcessor, AutoProcessor
 from trl import DataCollatorForCompletionOnlyLM
 
 # Local
@@ -35,10 +35,10 @@ def get_data_collator(
     is_traindata_tokenized: bool,
     max_seq_length: int,
     instruction_template: Optional[str],
-    text_field_name: Optional[str],
-    image_field_name: Optional[str],
-    processor=None,
     is_padding_free: bool = False,
+    text_field_name: Optional[str] = None,
+    image_field_name: Optional[str] = None,
+    processor: Optional[Union[AutoProcessor, LlavaProcessor]] = None,
 ) -> Callable:
     """Create and return the the appropriate collator type based on the configuration for packing,
     response_template, and dataset_text_field.
