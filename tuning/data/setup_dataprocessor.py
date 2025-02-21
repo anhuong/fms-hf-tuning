@@ -303,7 +303,8 @@ def _process_raw_data_args(
     handlers = None
     dataset_text_field = None
 
-    # ToDo: Think about a better way to handle below if condition (Could use multimodal boolean in model_args)
+    # ToDo: Think about a better way to handle this if condition
+    # (Could use multimodal boolean in model_args)
     if data_args.text_field_name and data_args.image_field_name:
 
         handlers, dataset_text_field = _get_vision_dataset_handlers(

@@ -274,7 +274,6 @@ def apply_processor_multimodal_data(
         Formatted HF Dataset element by formatting dataset with processor
     """
 
-    # ToDo: FOR NOW APPLY CHAT TEMPLATE FOR TESTING PURPOSE WHICH COULD BE SEPERATED USING DIFFERENT HANDLER
     processor = kwargs.get("processor", {})
     processor_kwargs = kwargs.get("processor_kwargs", {})
     fields_name = kwargs.get("fields_name", {})
@@ -287,7 +286,6 @@ def apply_processor_multimodal_data(
 
     element = processor(text=text, images=image, **processor_kwargs)
 
-    # Single element is of type <class 'transformers.feature_extraction_utils.BatchFeature'> which can be used as dict
     return element
 
 

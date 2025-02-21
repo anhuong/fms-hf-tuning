@@ -26,8 +26,9 @@ class VisionDataCollator:
         Collator function for batching already padded inputs.
 
         Args:
-            features (List[Dict[str, List[Any]]]): A list of dict, where each dict represents a single
-            example in the batch. The dict contains key input_ids, attention_mask, pixel_values etc.
+            features (List[Dict[str, List[Any]]]): A list of dict, where each dict
+            represents a single example in the batch. The dict contains key as
+            input_ids, attention_mask, pixel_values etc.
 
         Returns:
             batch (Dict[str, torch.Tensor]): A dict where each key corresponds to a batched tensor
@@ -36,7 +37,8 @@ class VisionDataCollator:
         """
 
         # The labels are the input_ids, and we mask the padding tokens in the loss computation
-        # TOOD: should we be ensuring EOS tokens is set? As chat template is applied so it should be set.
+        # TOOD: should we be ensuring EOS tokens is set?
+        # As chat template is applied so it should be set.
         batch = {}
         for key in features[0].keys():
             values = [feature[key] for feature in features]
