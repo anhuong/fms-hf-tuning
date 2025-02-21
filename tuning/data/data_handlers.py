@@ -15,14 +15,14 @@
 # Definition of some predefined data preprocessing functions that we need.
 
 # Standard
-from typing import Dict, List
+from typing import Dict, List, Union
 import copy
 import re
 
 # Third Party
 from jinja2 import StrictUndefined, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment, SecurityError
-from transformers import AutoTokenizer, LlavaProcessor
+from transformers import AutoProcessor, AutoTokenizer, LlavaProcessor
 
 # Local
 from tuning.utils.config_utils import process_jinja_placeholders
@@ -233,7 +233,7 @@ def apply_custom_jinja_template(
 
 def apply_tokenizer_chat_template(
     element: Dict[str, str],
-    tokenizer: AutoTokenizer,
+    tokenizer: Union[AutoTokenizer, AutoProcessor],
     dataset_text_field: str,
     **kwargs,
 ):
@@ -247,11 +247,15 @@ def apply_tokenizer_chat_template(
         Formatted HF Dataset element by formatting dataset with tokenizer's chat template
         Saves the result to dataset_text_field argument.
     """
+    chat_template_key = kwargs.get("chat_template_key", None)
     if tokenizer.chat_template is None:
         raise ValueError(
             "Tokenizer does not contain tokenizer.chat_template\
                           please pass data_args.chat_template"
         )
+    if chat_template_key and chat_template_key in element:
+        element = element[chat_template_key]
+
     return {
         f"{dataset_text_field}": tokenizer.apply_chat_template(element, tokenize=False)
     }
@@ -259,7 +263,6 @@ def apply_tokenizer_chat_template(
 
 def apply_processor_multimodal_data(
     element: Dict[str, str],
-    tokenizer: AutoTokenizer,
     **kwargs,
 ):
     """Function (data handler) to apply processor to multimodal dataset elements.
@@ -276,9 +279,7 @@ def apply_processor_multimodal_data(
     processor_kwargs = kwargs.get("processor_kwargs", {})
     fields_name = kwargs.get("fields_name", {})
 
-    text = processor.apply_chat_template(
-        element[fields_name["text_field_name"]], tokenize=False
-    )
+    text = element[fields_name["text_field_name"]]
 
     image = element[fields_name["image_field_name"]]
     if isinstance(processor, LlavaProcessor):

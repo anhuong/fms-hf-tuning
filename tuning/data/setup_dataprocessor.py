@@ -194,30 +194,45 @@ def _get_default_dataset_handlers(data_args, tokenizer_kwargs):
 ### Vsion Data Format
 def _get_vision_dataset_handlers(data_args, processor):
 
-    processor_kwargs = {}
-    processor_kwargs["return_tensors"] = "pt"
-    processor_kwargs["padding"] = True
+    handlers = []
 
-    fn_kwargs = {}
-    fn_kwargs["processor"] = processor
-    fn_kwargs["fields_name"] = {
-        "text_field_name": data_args.text_field_name,
-        "image_field_name": data_args.image_field_name,
+    # First data handler configuration
+    fn_kwargs1 = {
+        "tokenizer": processor,
+        "dataset_text_field": data_args.text_field_name,
+        "chat_template_key": data_args.text_field_name,
     }
-    fn_kwargs["processor_kwargs"] = processor_kwargs
-    # Num_proc is None to avoid using multicpu processing;
-    # batched is True to use batch processing and have correct numbers of padding tokens;
-    kwargs = {
-        "fn_kwargs": fn_kwargs,
+    kwargs1 = {
+        "fn_kwargs": fn_kwargs1,
+        "batched": False,
+        "remove_columns": None,
+    }
+    handlers.append(
+        DataHandlerConfig("apply_tokenizer_chat_template", arguments=kwargs1)
+    )
+
+    # Second data handler configuration
+    processor_kwargs = {
+        "return_tensors": "pt",
+        "padding": True,
+    }
+    fn_kwargs2 = {
+        "processor": processor,
+        "fields_name": {
+            "text_field_name": data_args.text_field_name,
+            "image_field_name": data_args.image_field_name,
+        },
+        "processor_kwargs": processor_kwargs,
+    }
+    kwargs2 = {
+        "fn_kwargs": fn_kwargs2,
         "batched": True,
         "remove_columns": [data_args.text_field_name, data_args.image_field_name],
         "num_proc": None,
     }
-
-    handlers = [
-        # DataHandlerConfig("apply_tokenizer_chat_template", arguments=kwargs),
-        DataHandlerConfig("apply_processor_multimodal_data", arguments=kwargs),
-    ]
+    handlers.append(
+        DataHandlerConfig("apply_processor_multimodal_data", arguments=kwargs2)
+    )
 
     return handlers, data_args.dataset_text_field
 
