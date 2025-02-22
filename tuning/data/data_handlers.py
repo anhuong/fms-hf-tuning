@@ -263,26 +263,39 @@ def apply_tokenizer_chat_template(
 
 def apply_processor_multimodal_data(
     element: Dict[str, str],
+    processor: Union[AutoProcessor, LlavaProcessor],
     **kwargs,
 ):
     """Function (data handler) to apply processor to multimodal dataset elements.
        Expects to be run as a HF Map API function.
     Args:
         element: the HF Dataset element.
-        tokenizer: Tokenizer to be used.
+        processor: The processor instance of AutoProcessor or LlavaProcessor.
     Returns:
         Formatted HF Dataset element by formatting dataset with processor
     """
 
-    processor = kwargs.get("processor", {})
     processor_kwargs = kwargs.get("processor_kwargs", {})
     fields_name = kwargs.get("fields_name", {})
+    try:
+        text_field = fields_name["text_field_name"]
+        image_field = fields_name["image_field_name"]
+    except KeyError as e:
+        raise ValueError(f"Missing required field in fields_name: {e}") from e
 
-    text = element[fields_name["text_field_name"]]
+    text = element.get(text_field)
+    image = element.get(image_field)
 
-    image = element[fields_name["image_field_name"]]
+    if text is None or image is None:
+        raise ValueError("Missing text or image data in element.") from e
+
     if isinstance(processor, LlavaProcessor):
-        image = image[0]
+        if isinstance(image, list) and image:
+            image = image[0]
+        else:
+            raise ValueError(
+                "Expected image to be a non-empty list for LlavaProcessor."
+            ) from e
 
     element = processor(text=text, images=image, **processor_kwargs)
 
