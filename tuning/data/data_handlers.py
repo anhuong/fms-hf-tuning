@@ -240,6 +240,7 @@ def apply_tokenizer_chat_template(
     element: Dict[str, str],
     tokenizer: AutoTokenizer,
     dataset_text_field: str,
+    chat_data_key: str = None,
     **kwargs,
 ):
     """Function (data handler) to apply tokenizers chat template to dataset elements.
@@ -248,11 +249,11 @@ def apply_tokenizer_chat_template(
         element: the HF Dataset element.
         tokenizer: Tokenizer to be used.
         dataset_text_field: formatted_dataset_field.
+        chat_data_key: dataset field where chat template will be applied.
     Returns:
         Formatted HF Dataset element by formatting dataset with tokenizer's chat template
         Saves the result to dataset_text_field argument.
     """
-    chat_template_key = kwargs.get("chat_template_key", None)
     processor = kwargs.get("processor", None)
     if processor is not None:
         tokenizer = processor
@@ -261,15 +262,15 @@ def apply_tokenizer_chat_template(
             "Tokenizer does not contain tokenizer.chat_template\
                           please pass data_args.chat_template"
         )
-    if chat_template_key and chat_template_key in element:
-        element = element[chat_template_key]
+    if chat_data_key and chat_data_key in element:
+        element = element[chat_data_key]
 
     return {
         f"{dataset_text_field}": tokenizer.apply_chat_template(element, tokenize=False)
     }
 
 
-def apply_processor_multimodal_data(
+def apply_multimodal_data_processor(
     element: Dict[str, str],
     processor: Union[AutoProcessor, LlavaProcessor],
     **kwargs,
@@ -295,7 +296,7 @@ def apply_processor_multimodal_data(
     image = element.get(image_field)
 
     if text is None or image is None:
-        raise ValueError("Missing text or image data in element.") from e
+        raise ValueError("Missing text or image data in element.")
 
     # Handler is used with batch=True where image is `List[List[PIL.Image], List[PIL.Image]]`
     # We need to convert it to `List[PIL.Image]` for LlavaProcessor
@@ -306,12 +307,10 @@ def apply_processor_multimodal_data(
             raise ValueError(
                 "Expected image to be a non-empty list of lists \
                 with a single image for LlavaProcessor."
-            ) from e
+            )
 
     # If LlavaNextProcessor then convert mode of image to RGB. Process of Granite-3.2-Vision Model
-    elif isinstance(
-        processor, LlavaNextProcessor
-    ):
+    elif isinstance(processor, LlavaNextProcessor):
         if isinstance(image, list) and image and isinstance(image[0], list):
             image = [
                 img[0].convert("RGB") if img[0].mode != "RGB" else img[0]
@@ -321,7 +320,7 @@ def apply_processor_multimodal_data(
             raise ValueError(
                 "Expected image to be a non-empty list of lists \
                 with a single image for LlavaNextProcessor."
-            ) from e
+            )
 
     element = processor(text=text, images=image, **processor_kwargs)
 
@@ -368,6 +367,6 @@ AVAILABLE_DATA_HANDLERS = {
     "apply_custom_data_formatting_template": apply_custom_data_formatting_template,
     "apply_custom_jinja_template": apply_custom_jinja_template,
     "apply_tokenizer_chat_template": apply_tokenizer_chat_template,
-    "apply_processor_multimodal_data": apply_processor_multimodal_data,
+    "apply_multimodal_data_processor": apply_multimodal_data_processor,
     "duplicate_columns": duplicate_columns,
 }
