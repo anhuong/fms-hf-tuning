@@ -289,6 +289,8 @@ def _process_raw_data_args(
 
     # Create a data processor with default processor config
     default_processor_config = DataPreProcessorConfig()
+    # TODO: CHECK VALUE OF STREAMING FROM DATA_ARGS
+    default_processor_config.streaming = True
     data_processor = get_datapreprocessor(
         processor_config=default_processor_config,
         tokenizer=tokenizer,

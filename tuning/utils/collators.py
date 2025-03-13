@@ -39,7 +39,11 @@ class VisionDataCollator:
         batch = {}
         for key in features[0].keys():
             values = [feature[key] for feature in features]
-            batch[key] = torch.tensor(values)
+            batch[key] = (
+                torch.tensor(values)
+                if not isinstance(values[0], torch.Tensor)
+                else torch.stack(values)
+            )
 
         labels = batch["input_ids"].clone()
         if self.processor.tokenizer.pad_token_id is not None:

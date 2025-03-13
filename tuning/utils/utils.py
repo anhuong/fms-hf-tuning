@@ -13,12 +13,14 @@
 # limitations under the License.
 
 # Standard
+import io
 import json
 import logging
 import os
 
 # Third Party
 from datasets import IterableDataset
+from PIL import Image
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -101,3 +103,36 @@ def validate_mergeable_datasets(datasets):
                         ds_column_types[col],
                         ref_column_types[col],
                     )
+
+
+def convert_bytes_dict_to_pil(image):
+    """
+    Convert image data (in various shapes) where the data may be stored as:
+    1) A list of lists of dicts containing bytes,
+    2) A list of dicts containing bytes,
+    3) A single dict containing bytes.
+    """
+    # Case 1: List of lists of dicts
+    if isinstance(image, list) and image and isinstance(image[0], list):
+        # We have something like [[{bytes: ...}, {bytes: ...}], [{bytes: ...}]]
+        for i, sub_list in enumerate(image):
+            for j, item in enumerate(sub_list):
+                if isinstance(item, dict) and "bytes" in item:
+                    pil_image = Image.open(io.BytesIO(item["bytes"]))
+                    image[i][j] = pil_image
+
+    # Case 2: List of dicts
+    elif isinstance(image, list) and image and isinstance(image[0], dict):
+        # We have something like [{bytes: ...}, {bytes: ...}, ...]
+        for i, item in enumerate(image):
+            if "bytes" in item:
+                pil_image = Image.open(io.BytesIO(item["bytes"]))
+                image[i] = pil_image
+
+    # Case 3: Single dict
+    elif isinstance(image, dict):
+        # We have a single dict {bytes: ...}
+        if "bytes" in image:
+            image = Image.open(io.BytesIO(image["bytes"]))
+
+    return image

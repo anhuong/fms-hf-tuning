@@ -38,6 +38,13 @@ def tokenizer_and_embedding_resize(
     num_new_tokens = tokenizer.add_special_tokens(special_tokens_dict)
     embedding_size = int(multiple_of * math.ceil(len(tokenizer) / multiple_of))
     num_new_tokens = num_new_tokens + embedding_size - len(tokenizer)
+    if isinstance(
+        model, transformers.models.mllama.modeling_mllama.MllamaForConditionalGeneration
+    ):
+        model.language_model.vocab_size = embedding_size
+        model.language_model.config.vocab_size = embedding_size
+        model.language_model.text_config.vocab_size = embedding_size
+
     model.resize_token_embeddings(embedding_size)
     if num_new_tokens > 0:
         input_embeddings = model.get_input_embeddings().weight.data
