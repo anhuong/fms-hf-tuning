@@ -50,6 +50,7 @@ from tuning.config.acceleration_configs import (
     FastMoeConfig,
     FusedOpsAndKernelsConfig,
     QuantizedLoraConfig,
+    get_additional_accel_framework_callbacks,
 )
 from tuning.config.tracker_configs import (
     AimConfig,
@@ -389,11 +390,12 @@ def train(
     # from our object directly. In the future, we should consider renaming this class and / or
     # not adding things that are not directly used by the trainer instance to it.
 
-    transformer_train_arg_fields = [x.name for x in dataclasses.fields(SFTConfig)]
+    # To filter out fields that are not defined as init (eg. _n_gpu)
+    transformer_train_arg_fields = [
+        x.name for x in dataclasses.fields(SFTConfig) if x.init
+    ]
     transformer_kwargs = {
-        k: v
-        for k, v in train_args.to_dict().items()
-        if k in transformer_train_arg_fields
+        k: v for k, v in vars(train_args).items() if k in transformer_train_arg_fields
     }
 
     additional_args = {
@@ -440,6 +442,12 @@ def train(
         # ready for train may produce additional callbacks for the trainer
         for x in framework.get_callbacks_and_ready_for_train(model, accelerator):
             trainer.add_callback(x)
+        for clb in get_additional_accel_framework_callbacks(
+            active_plugins=framework.active_plugins,
+            trainer=trainer,
+            pretrained_model_name_or_path=model_args.model_name_or_path,
+        ):
+            trainer.add_callback(clb)
 
     resume_from_checkpoint = None
     # Check if resume flag is not passed (None), or if flag is true and
