@@ -227,7 +227,7 @@ def _get_vision_dataset_handlers(data_args, processor):
     fn_kwargs1 = {
         "processor": processor,
         "dataset_text_field": data_args.dataset_text_field,
-        "chat_data_key": data_args.dataset_text_field,
+        "conversation_column": data_args.dataset_text_field,
     }
     kwargs1 = {
         "fn_kwargs": fn_kwargs1,
