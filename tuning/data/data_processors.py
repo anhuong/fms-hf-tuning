@@ -354,6 +354,8 @@ class DataPreProcessor:
                             logger.warning(
                                 "Could not remove columns from IterableDataset"
                             )
+                            raw_datasets[splitName] = resolve_iterable_dataset_features(raw_datasets[splitName])
+                            column_names = raw_datasets[splitName].column_names
                         if column_names and "__content__" in column_names:
                             column_names.remove("__content__")
 
