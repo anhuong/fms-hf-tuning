@@ -305,7 +305,7 @@ def apply_tokenizer_chat_template(
     }
 
 
-def apply_multimodal_data_processor(
+def prepare_multimodal_data_processor(
     element: Dict[str, str],
     processor: Union[AutoProcessor, LlavaProcessor],
     **kwargs,
@@ -478,8 +478,8 @@ AVAILABLE_DATA_HANDLERS = {
         handler_type=DataHandlerType.MAP,
         allows_batching=True,
     ),
-    "apply_multimodal_data_processor": DataHandler(
-        op=apply_multimodal_data_processor,
+    "prepare_multimodal_data_processor": DataHandler(
+        op=prepare_multimodal_data_processor,
         handler_type=DataHandlerType.MAP,
         allows_batching=True,
     ),

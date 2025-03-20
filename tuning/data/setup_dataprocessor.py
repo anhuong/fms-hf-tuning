@@ -258,7 +258,7 @@ def _get_vision_dataset_handlers(data_args, processor):
         "num_proc": None,
     }
     handlers.append(
-        DataHandlerConfig("apply_multimodal_data_processor", arguments=kwargs2)
+        DataHandlerConfig("prepare_multimodal_data_processor", arguments=kwargs2)
     )
 
     return handlers, data_args.dataset_text_field
