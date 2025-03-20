@@ -30,12 +30,10 @@ from transformers import (
     LlavaNextProcessor,
     LlavaProcessor,
 )
-import numpy as np
-import torch
 
 # Local
 from tuning.utils.config_utils import process_jinja_placeholders
-from tuning.utils.utils import convert_bytes_dict_to_pil
+from tuning.utils.utils import try_convert_bytes_dict_to_pil
 
 
 class DataHandlerType(Enum):
@@ -335,20 +333,19 @@ def apply_multimodal_data_processor(
     if text is None or image is None:
         raise ValueError("Missing text or image data in element.")
 
-    # Convert Bytes image to PIL
-    image = convert_bytes_dict_to_pil(image)
+    image = try_convert_bytes_dict_to_pil(image)  # Needed for below image processing
 
     # Handler is used with batch=True where image is `List[List[PIL.Image], List[PIL.Image]]`
     # We need to convert it to `List[PIL.Image]` for LlavaProcessor
     if isinstance(processor, LlavaProcessor):
-        if isinstance(image, list) and image and isinstance(image[0], list):
+        if image and isinstance(image, list) and isinstance(image[0], list):
             image = [img[0] for img in image]
 
     # If LlavaNextProcessor then convert mode of image to RGB. Process of Granite-3.2-Vision Model
     elif isinstance(processor, LlavaNextProcessor):
-        if isinstance(image, list) and image and isinstance(image[0], list):
+        if image and isinstance(image, list) and isinstance(image[0], list):
             image = [
-                [im.convert("RGB") if im.mode != "RGB" else im for im in img]
+                [_img.convert("RGB") if _img.mode != "RGB" else _img for _img in img]
                 for img in image
             ]
         elif isinstance(image, list) and image and isinstance(image[0], Image.Image):
@@ -356,12 +353,10 @@ def apply_multimodal_data_processor(
         elif image and isinstance(image, Image.Image):
             image = image.convert("RGB") if image.mode != "RGB" else image
 
-    element = processor(text=text, images=image, **processor_kwargs)
-
-    # Convert tokenized inputs to List
     element = {
-        key: value.tolist() if isinstance(value, (torch.Tensor, np.ndarray)) else value
-        for key, value in element.items()
+        "text_field": text,
+        "image_field": image,
+        "processor_kwargs": processor_kwargs,
     }
     return element
 

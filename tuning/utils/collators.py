@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Third Party
-import torch
+
+# Local
+from tuning.utils.utils import try_convert_bytes_dict_to_pil
 
 
 class VisionDataCollator:
@@ -36,14 +37,11 @@ class VisionDataCollator:
 
         # The labels are the input_ids, and we mask the padding tokens in the loss computation
         # As chat template is applied so it should be set.
-        batch = {}
-        for key in features[0].keys():
-            values = [feature[key] for feature in features]
-            batch[key] = (
-                torch.tensor(values)
-                if not isinstance(values[0], torch.Tensor)
-                else torch.stack(values)
-            )
+        processor_kwargs = features[0]["processor_kwargs"]
+        batch_text = [feature["text_field"] for feature in features]
+        batch_image = [feature["image_field"] for feature in features]
+        batch_image = try_convert_bytes_dict_to_pil(batch_image)
+        batch = self.processor(text=batch_text, images=batch_image, **processor_kwargs)
 
         labels = batch["input_ids"].clone()
         if self.processor.tokenizer.pad_token_id is not None:

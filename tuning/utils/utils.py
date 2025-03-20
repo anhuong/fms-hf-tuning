@@ -105,7 +105,7 @@ def validate_mergeable_datasets(datasets):
                     )
 
 
-def convert_bytes_dict_to_pil(image):
+def try_convert_bytes_dict_to_pil(image):
     """
     Convert image data (in various shapes) where the data may be stored as:
     1) A list of lists of dicts containing bytes,
@@ -113,7 +113,7 @@ def convert_bytes_dict_to_pil(image):
     3) A single dict containing bytes.
     """
     # Case 1: List of lists of dicts
-    if isinstance(image, list) and image and isinstance(image[0], list):
+    if image and isinstance(image, list) and isinstance(image[0], list):
         # We have something like [[{bytes: ...}, {bytes: ...}], [{bytes: ...}]]
         for i, sub_list in enumerate(image):
             for j, item in enumerate(sub_list):
@@ -122,7 +122,7 @@ def convert_bytes_dict_to_pil(image):
                     image[i][j] = pil_image
 
     # Case 2: List of dicts
-    elif isinstance(image, list) and image and isinstance(image[0], dict):
+    elif image and isinstance(image, list) and isinstance(image[0], dict):
         # We have something like [{bytes: ...}, {bytes: ...}, ...]
         for i, item in enumerate(image):
             if "bytes" in item:
