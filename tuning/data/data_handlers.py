@@ -277,6 +277,7 @@ def apply_tokenizer_chat_template(
         element: the HF Dataset element.
         tokenizer: Tokenizer to be used.
         dataset_text_field: the field in which to store the rendered text.
+        chat_data_key: dataset field where chat template will be applied.
         conversation_column: column name where the chat template expects the conversation
     Returns:
         Formatted HF Dataset element by formatting dataset with tokenizer's chat template
