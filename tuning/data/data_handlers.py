@@ -354,8 +354,9 @@ def prepare_multimodal_data_processor(
             image = image.convert("RGB") if image.mode != "RGB" else image
 
     element = {
-        "text_field": text,
-        "image_field": image,
+        text_field: text,
+        image_field: image,
+        "fields_name": fields_name,
         "processor_kwargs": processor_kwargs,
     }
     return element

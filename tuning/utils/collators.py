@@ -38,8 +38,11 @@ class VisionDataCollator:
         # The labels are the input_ids, and we mask the padding tokens in the loss computation
         # As chat template is applied so it should be set.
         processor_kwargs = features[0]["processor_kwargs"]
-        batch_text = [feature["text_field"] for feature in features]
-        batch_image = [feature["image_field"] for feature in features]
+        fields_name = features[0]["fields_name"]
+        text_field = fields_name["dataset_text_field"]
+        image_field = fields_name["dataset_image_field"]
+        batch_text = [feature[text_field] for feature in features]
+        batch_image = [feature[image_field] for feature in features]
         batch_image = try_convert_bytes_dict_to_pil(batch_image)
         batch = self.processor(text=batch_text, images=batch_image, **processor_kwargs)
 
