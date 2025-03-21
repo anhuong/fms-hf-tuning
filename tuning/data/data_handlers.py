@@ -340,7 +340,7 @@ def prepare_multimodal_data_processor(
     # We need to convert it to `List[PIL.Image]` for LlavaProcessor
     if isinstance(processor, LlavaProcessor):
         if image and isinstance(image, list) and isinstance(image[0], list):
-            image = [img[0] for img in image]
+            image = [img[0].convert("RGB") if img[0].mode != "RGB" else img[0] for img in image]
 
     # If LlavaNextProcessor then convert mode of image to RGB. Process of Granite-3.2-Vision Model
     elif isinstance(processor, LlavaNextProcessor):
