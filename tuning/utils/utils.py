@@ -111,6 +111,14 @@ def try_convert_bytes_dict_to_pil(image):
     1) A list of lists of dicts containing bytes,
     2) A list of dicts containing bytes,
     3) A single dict containing bytes.
+
+    Args:
+        image (Union[list[list[dict]], list[dict], dict]):
+            The input image data to be converted. Each dict should contain a "bytes" key.
+
+    Returns:
+        Union[list[list[Image.Image]], list[Image.Image], Image.Image]:
+            The converted image data as PIL Image objects, maintaining the original structure.
     """
     # Case 1: List of lists of dicts
     if image and isinstance(image, list) and isinstance(image[0], list):
@@ -134,5 +142,38 @@ def try_convert_bytes_dict_to_pil(image):
         # We have a single dict {bytes: ...}
         if "bytes" in image:
             image = Image.open(io.BytesIO(image["bytes"]))
+
+    return image
+
+
+def try_convert_image_to_rgb(image):
+    """
+    Converts image data to RGB format if it is not already in RGB mode.
+    The input image data can be in one of the following formats:
+
+    1. A list of lists of PIL Image objects.
+    2. A list of PIL Image objects.
+    3. A single PIL Image object.
+
+    Args:
+        image (Union[list[list[Image.Image]], list[Image.Image], Image.Image]):
+            The input image data to be converted.
+
+    Returns:
+        Union[list[list[Image.Image]], list[Image.Image], Image.Image]:
+            The image data converted to RGB format, maintaining the original structure.
+    """
+    # Case 1: List of lists of PIL images
+    if image and isinstance(image, list) and isinstance(image[0], list):
+        image = [
+            [_img.convert("RGB") if _img.mode != "RGB" else _img for _img in img]
+            for img in image
+        ]
+    # Case 2: List of PIL images
+    elif isinstance(image, list) and image and isinstance(image[0], Image.Image):
+        image = [img.convert("RGB") if img.mode != "RGB" else img for img in image]
+    # Case 3: Single PIL image
+    elif image and isinstance(image, Image.Image):
+        image = image.convert("RGB") if image.mode != "RGB" else image
 
     return image
