@@ -18,21 +18,27 @@
 from enum import Enum
 from typing import Dict, List, Union
 import copy
+import logging
 import re
 
 # Third Party
 from jinja2 import StrictUndefined, TemplateSyntaxError, UndefinedError
 from jinja2.sandbox import SandboxedEnvironment, SecurityError
+from PIL import Image
 from transformers import (
     AutoProcessor,
     AutoTokenizer,
     GPT2TokenizerFast,
     LlavaNextProcessor,
     LlavaProcessor,
+    MllamaProcessor,
 )
 
 # Local
 from tuning.utils.config_utils import process_jinja_placeholders
+from tuning.utils.utils import try_convert_bytes_dict_to_pil, try_convert_image_to_rgb
+
+logger = logging.getLogger(__name__)
 
 
 class DataHandlerType(Enum):
@@ -266,7 +272,6 @@ def apply_tokenizer_chat_template(
     element: Dict[str, str],
     tokenizer: AutoTokenizer,
     dataset_text_field: str,
-    chat_data_key: str = None,
     conversation_column: str = None,
     **kwargs,
 ):
@@ -291,9 +296,7 @@ def apply_tokenizer_chat_template(
             "Tokenizer does not contain tokenizer.chat_template\
                           please pass data_args.chat_template"
         )
-    if chat_data_key and chat_data_key in element:
-        converation = element[chat_data_key]
-    elif conversation_column:
+    if conversation_column:
         converation = element[conversation_column]
     else:
         converation = element
@@ -308,9 +311,11 @@ def apply_tokenizer_chat_template(
     }
 
 
-def apply_multimodal_data_processor(
+def prepare_multimodal_data_processor(
     element: Dict[str, str],
-    processor: Union[AutoProcessor, LlavaProcessor],
+    processor: Union[
+        AutoProcessor, MllamaProcessor, LlavaProcessor, LlavaNextProcessor
+    ],
     **kwargs,
 ):
     """Function (data handler) to apply processor to multimodal dataset elements.
@@ -336,22 +341,42 @@ def apply_multimodal_data_processor(
     if text is None or image is None:
         raise ValueError("Missing text or image data in element.")
 
-    # Handler is used with batch=True where image is `List[List[PIL.Image], List[PIL.Image]]`
-    # We need to convert it to `List[PIL.Image]` for LlavaProcessor
-    if isinstance(processor, LlavaProcessor):
-        if isinstance(image, list) and image and isinstance(image[0], list):
+    image = try_convert_bytes_dict_to_pil(image)  # Needed for below image processing
+
+    # We need to pick first image from the Image list for LlavaProcessor and
+    # LlavaNextProcessor (only Granite-3.2-Vision not Llava Mistral)
+    if isinstance(processor, LlavaProcessor) or (
+        isinstance(processor, LlavaNextProcessor)
+        and isinstance(processor.tokenizer, GPT2TokenizerFast)
+    ):
+
+        if (
+            image and isinstance(image, list) and isinstance(image[0], list)
+        ):  # FOR BATCHED = TRUE
             image = [img[0] for img in image]
+            logger.warning(
+                "LlavaProcessor and LlavaNextProcessor (tokenizer GPT2TokenizerFast)  \
+                expects a single image, picking the first image from the list."
+            )
+        elif (
+            image and isinstance(image, list) and isinstance(image[0], Image.Image)
+        ):  # FOR BATCHED = FALSE
+            image = image[0]
+            logger.warning(
+                "LlavaProcessor and LlavaNextProcessor (tokenizer GPT2TokenizerFast) \
+                expects a single image, picking the first image from the list."
+            )
 
-    # Granite-3.2-Vision Model only take first image
-    elif isinstance(processor, LlavaNextProcessor) and isinstance(processor.tokenizer, GPT2TokenizerFast):
-        if isinstance(image, list) and image and isinstance(image[0], list):
-            image = [
-                img[0].convert("RGB") if img[0].mode != "RGB" else img[0]
-                for img in image
-            ]
+    # Convert image to RGB if it is not in RGB format
+    if isinstance(processor, (LlavaProcessor, LlavaNextProcessor)):
+        image = try_convert_image_to_rgb(image)
 
-    element = processor(text=text, images=image, **processor_kwargs)
-
+    element = {
+        text_field: text,
+        image_field: image,
+        "fields_name": fields_name,
+        "processor_kwargs": processor_kwargs,
+    }
     return element
 
 
@@ -472,6 +497,11 @@ AVAILABLE_DATA_HANDLERS = {
         handler_type=DataHandlerType.MAP,
         allows_batching=True,
     ),
+    "prepare_multimodal_data_processor": DataHandler(
+        op=prepare_multimodal_data_processor,
+        handler_type=DataHandlerType.MAP,
+        allows_batching=True,
+    ),
     "tokenize": DataHandler(
         op=tokenize,
         handler_type=DataHandlerType.MAP,
@@ -481,10 +511,5 @@ AVAILABLE_DATA_HANDLERS = {
         op=skip_large_text,
         handler_type=DataHandlerType.FILTER,
         allows_batching=False,
-    ),
-    "apply_multimodal_data_processor": DataHandler(
-        op=apply_multimodal_data_processor,
-        handler_type=DataHandlerType.MAP,
-        allows_batching=True,
     ),
 }

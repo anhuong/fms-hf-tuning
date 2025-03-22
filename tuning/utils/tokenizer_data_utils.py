@@ -17,6 +17,7 @@ from typing import Dict
 import math
 
 # Third Party
+from transformers.models.mllama.modeling_mllama import MllamaForConditionalGeneration
 import transformers
 
 
@@ -38,6 +39,8 @@ def tokenizer_and_embedding_resize(
     num_new_tokens = tokenizer.add_special_tokens(special_tokens_dict)
     embedding_size = int(multiple_of * math.ceil(len(tokenizer) / multiple_of))
     num_new_tokens = num_new_tokens + embedding_size - len(tokenizer)
+    if isinstance(model, MllamaForConditionalGeneration):
+        model.language_model.vocab_size = embedding_size
 
     if num_new_tokens > 0:
         model.resize_token_embeddings(embedding_size)
