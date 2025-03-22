@@ -368,7 +368,7 @@ def prepare_multimodal_data_processor(
             )
 
     # Convert image to RGB if it is not in RGB format
-    if isinstance(processor, LlavaProcessor, LlavaNextProcessor):
+    if isinstance(processor, (LlavaProcessor, LlavaNextProcessor)):
         image = try_convert_image_to_rgb(image)
 
     element = {
